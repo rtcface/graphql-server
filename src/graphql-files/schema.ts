@@ -24,13 +24,18 @@ export const typeDefs = `
     password: String!
   }
 
+  input TokenInput{
+    token:String!
+  }
+
   type Mutation {
     addUser(input: UserInput!) : User,
     login(input: LoginInput!): Token
   }
 
   type Query {
-    getUser : [User]
+    getUsers : [User]
+    getUser(input:TokenInput!): User
   }
 
 

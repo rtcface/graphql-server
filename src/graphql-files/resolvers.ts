@@ -1,9 +1,21 @@
+require('dotenv').config({path:'.env'});
 
 const User = require("../models/Users");
-import { User,LoginInput,UserInput,Token,UserPass, JwtPayload } from "../interfaces";
+import { User,LoginInput,UserInput,Token,UserPass, JwtPayload, TokenInput } from "../interfaces";
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-require('dotenv').config({path:'.env'});
+
+export const createJWT = (payload:JwtPayload,seed:string, expiresIn:string ):Token => {
+  console.log('In the create',seed);
+  return {token:jwt.sign(payload,seed,{ expiresIn })} as Token;
+
+}
+
+export const decodeJWT = async ( { token }:Token, seed:string ):Promise<JwtPayload> => {
+    console.log(token,seed);
+    const {id} = await jwt.verify(token,seed) as JwtPayload;
+    return {id};
+} 
 
 export const resolvers = {
   
@@ -45,18 +57,20 @@ export const resolvers = {
       
       const payload:JwtPayload={
         id:existUser.id
-      }
+      }     
 
-     
-
-      return {token: jwt.sign(payload,process.env.JWT_SEED!)} as Token 
+      return createJWT(payload,process.env.JWT_SEED!,'1h');
      }
   },
 
   Query: {
-    getUser: async (): Promise<User> => {
+    getUsers: async (): Promise<[User]> => {
       return await User.find({});
     },
+    getUser: async (_: any,{ input }:TokenInput): Promise<User> => {
+      
+      return await User.find({id:decodeJWT( input,process.env.JWT_SEED! )});
+    }  
   },
 };
 

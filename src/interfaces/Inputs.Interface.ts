@@ -1,4 +1,4 @@
-import { User, Login } from "./User.Interface";
+import { User, Login, Token } from './User.Interface';
 
 export interface UserInput{
     input:User
@@ -6,4 +6,8 @@ export interface UserInput{
 
 export interface LoginInput{
     input:Login
+}
+
+export interface TokenInput{
+    input:Token
 }
