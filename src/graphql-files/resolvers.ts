@@ -1,9 +1,24 @@
 require('dotenv').config({path:'.env'});
-
+import { Product } from '../models/Products';
 const User = require("../models/Users");
-import { User,LoginInput,UserInput,Token,UserPass, JwtPayload, TokenInput } from "../interfaces";
+// const Product = require("../models/Products");
+
+
+import { User,
+  LoginInput,
+  UserInput,
+  Token,
+  UserPass,
+  JwtPayload,
+  TokenInput,
+  Product as iProduct,
+  ProductByInput,
+  ProductInput, 
+  UpdateProductInput,
+  DeleteProductInput} from "../interfaces";
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import {  } from '../interfaces';
 
 export const createJWT = (payload:JwtPayload,seed:string, expiresIn:string ):Token => {
   console.log('In the create',seed);
@@ -14,12 +29,14 @@ export const createJWT = (payload:JwtPayload,seed:string, expiresIn:string ):Tok
 export const decodeJWT = async ( { token }:Token, seed:string ):Promise<JwtPayload> => {
     console.log(token,seed);
     const {id} = await jwt.verify(token,seed) as JwtPayload;
+    console.log('-----------------',id);
     return {id};
 } 
 
 export const resolvers = {
   
   Mutation: {
+    // Users
     addUser: async (_: any, { input }: UserInput):Promise<User | undefined> => {
       const { email, password } = input;
 
@@ -60,17 +77,76 @@ export const resolvers = {
       }     
 
       return createJWT(payload,process.env.JWT_SEED!,'1h');
-     }
+     },
+    // Products
+    addProduct:async (_:any, { input }: ProductInput ):Promise<iProduct | undefined> => {
+
+      try {
+        const product = new Product(input);
+        product.save();
+        return product;        
+      } catch (error) {
+        console.log(error);
+        return undefined;
+      }
+           
+    },
+    updateProduct:async (_:any,{ id , input }: UpdateProductInput ):Promise<iProduct | undefined | null>  => {
+      try {
+        let product = await Product.findOne({id});
+
+      if(!product)
+          throw new Error(`the product with id: ${id} is not exists`);
+        
+        product = await Product.findOneAndUpdate({_id:id}, input,{new:true});
+
+        return product;
+      
+      } catch (error) {
+        console.log(error);
+      }
+      return undefined;
+    },
+    deleteProduct:async (_:any,{ id }:DeleteProductInput ):Promise<Boolean> => {
+      try {
+        let product = await Product.findById(id);
+
+        if(!product)
+          throw new Error(`the product with id ${id} is not exist`);
+        
+        await Product.findOneAndDelete({_id:id});
+        
+        return true;
+      } catch (error) {
+        throw new Error(`the product with id ${id} is not exist`);
+      }
+      return false;
+
+    }
+
   },
 
   Query: {
+    // Users
     getUsers: async (): Promise<[User]> => {
       return await User.find({});
     },
-    getUser: async (_: any,{ input }:TokenInput): Promise<User> => {
-      
-      return await User.find({id:decodeJWT( input,process.env.JWT_SEED! )});
-    }  
+    getUser: async (_: any,{ input }:TokenInput): Promise<{id:string}> => {      
+      return  await decodeJWT( input ,process.env.JWT_SEED! );
+    },  
+    //  Products
+    getProducts:async () => {
+      return await Product.find({});
+    },
+    getProduct:async (_:any, {input}:ProductByInput ) => {
+      const {id} =input;
+      const product = await Product.findOne({id});
+      if(!product)
+          throw new Error(`the product with id: ${id} is not exists`)
+
+      return product;
+    }
+
   },
 };
 

@@ -8,6 +8,18 @@ export const typeDefs = `
     creat: String
   }
 
+  type Product {
+    id: ID
+    name: String
+    stock: Int
+    price: Float
+    create: String
+  }
+
+  type UserId {
+    id: ID
+  }
+
   type Token {
     token: String
   }
@@ -28,14 +40,34 @@ export const typeDefs = `
     token:String!
   }
 
+  input ProductInput{
+    name: String!
+    stock: Int!
+    price: Float!
+  }
+
+  input ProductByInput{
+    id:ID!
+  }
+
   type Mutation {
+    # Users
     addUser(input: UserInput!) : User,
-    login(input: LoginInput!): Token
+    login(input: LoginInput!): Token,
+    
+    #Products
+    addProduct(input: ProductInput!) : Product,
+    updateProduct(id:ID!,input: ProductInput! ) : Product
+    deleteProduct(id:ID!): Boolean
   }
 
   type Query {
+    #Users
     getUsers : [User]
-    getUser(input:TokenInput!): User
+    getUser(input:TokenInput!): UserId
+    #Producs 
+    getProducts : [Product]
+    getProduct(input:ProductByInput!) : Product
   }
 
 
