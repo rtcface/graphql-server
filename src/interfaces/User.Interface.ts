@@ -2,7 +2,8 @@ export interface User {
     name: string,
     lastName: string,
     email: string,
-    password: string
+    password: string,
+    createAt: Date
 }
 
 export interface Login {

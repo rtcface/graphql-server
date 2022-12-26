@@ -19,7 +19,7 @@ import { Product as iProduct } from '../interfaces';
         require: true,
         trim: true
     },
-    create:{
+    createAt:{
         type: Date,
         default: Date.now
     }

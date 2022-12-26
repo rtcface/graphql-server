@@ -5,7 +5,7 @@ export const typeDefs = `
     name: String
     lastName: String
     email: String
-    creat: String
+    createAt: String
   }
 
   type Product {
@@ -13,7 +13,7 @@ export const typeDefs = `
     name: String
     stock: Int
     price: Float
-    create: String
+    createAt: String
   }
 
   type UserId {

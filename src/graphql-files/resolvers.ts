@@ -1,48 +1,56 @@
-require('dotenv').config({path:'.env'});
-import { Product } from '../models/Products';
-const User = require("../models/Users");
-// const Product = require("../models/Products");
-
-
-import { User,
+import { Product, User } from "../models";
+import {
+  User as iUser,
   LoginInput,
   UserInput,
   Token,
-  UserPass,
   JwtPayload,
   TokenInput,
   Product as iProduct,
   ProductByInput,
-  ProductInput, 
+  ProductInput,
   UpdateProductInput,
-  DeleteProductInput} from "../interfaces";
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
-import {  } from '../interfaces';
+  DeleteProductInput,
+} from "../interfaces";
 
-export const createJWT = (payload:JwtPayload,seed:string, expiresIn:string ):Token => {
-  console.log('In the create',seed);
-  return {token:jwt.sign(payload,seed,{ expiresIn })} as Token;
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
 
-}
+require("dotenv").config({ path: ".env" });
 
-export const decodeJWT = async ( { token }:Token, seed:string ):Promise<JwtPayload> => {
-    console.log(token,seed);
-    const {id} = await jwt.verify(token,seed) as JwtPayload;
-    console.log('-----------------',id);
-    return {id};
-} 
+/* #region JWT FUNTIONS  */
+export const createJWT = (
+  payload: JwtPayload,
+  seed: string,
+  expiresIn: string
+): Token => {
+  console.log("In the create", seed);
+  return { token: jwt.sign(payload, seed, { expiresIn }) } as Token;
+};
+
+export const decodeJWT = async (
+  { token }: Token,
+  seed: string
+): Promise<JwtPayload> => {
+  console.log(token, seed);
+  const { id } = (await jwt.verify(token, seed)) as JwtPayload;
+  console.log("-----------------", id);
+  return { id };
+};
+/* #endregion */
 
 export const resolvers = {
-  
   Mutation: {
-    // Users
-    addUser: async (_: any, { input }: UserInput):Promise<User | undefined> => {
+    /* #region  Users Funtions  */
+    addUser: async (
+      _: any,
+      { input }: UserInput
+    ): Promise<iUser | undefined> => {
       const { email, password } = input;
 
       const salt = await bcrypt.genSalt(10);
-      
-      input.password= await bcrypt.hash(password,salt);
+
+      input.password = await bcrypt.hash(password, salt);
 
       const existUser = await User.findOne({ email });
       if (existUser) {
@@ -58,96 +66,99 @@ export const resolvers = {
         return undefined;
       }
     },
-    login: async (_: any, { input }: LoginInput ):Promise<Token> => { 
-      
-      const { email, password } =input;
+    login: async (_: any, { input }: LoginInput): Promise<Token> => {
+      const { email, password } = input;
 
-      const existUser:UserPass = await User.findOne({ email });
-      
+      const existUser = await User.findOne({ email });
+
       if (!existUser) {
-        throw new Error(`user or password incorrecto ${email}`)
+        throw new Error(`user or password incorrecto ${email}`);
       }
 
-      if(!await bcrypt.compare(password,existUser.password)){
-        throw new Error(`user or password incorrecto Pass`)
+      if (!(await bcrypt.compare(password, existUser.password))) {
+        throw new Error(`user or password incorrecto Pass`);
       }
-      
-      const payload:JwtPayload={
-        id:existUser.id
-      }     
 
-      return createJWT(payload,process.env.JWT_SEED!,'1h');
-     },
-    // Products
-    addProduct:async (_:any, { input }: ProductInput ):Promise<iProduct | undefined> => {
+      const payload: JwtPayload = {
+        id: existUser.id,
+      };
 
+      return createJWT(payload, process.env.JWT_SEED!, "1h");
+    },
+    /* #endregion */
+
+    /* #region  Product Funtions */
+    addProduct: async (
+      _: any,
+      { input }: ProductInput
+    ): Promise<iProduct | undefined> => {
       try {
         const product = new Product(input);
         product.save();
-        return product;        
+        return product;
       } catch (error) {
         console.log(error);
         return undefined;
       }
-           
     },
-    updateProduct:async (_:any,{ id , input }: UpdateProductInput ):Promise<iProduct | undefined | null>  => {
+    updateProduct: async (
+      _: any,
+      { id, input }: UpdateProductInput
+    ): Promise<iProduct | undefined | null> => {
       try {
-        let product = await Product.findOne({id});
+        let product = await Product.findOne({ id });
 
-      if(!product)
+        if (!product)
           throw new Error(`the product with id: ${id} is not exists`);
-        
-        product = await Product.findOneAndUpdate({_id:id}, input,{new:true});
+
+        product = await Product.findOneAndUpdate({ _id: id }, input, {
+          new: true,
+        });
 
         return product;
-      
       } catch (error) {
         console.log(error);
       }
       return undefined;
     },
-    deleteProduct:async (_:any,{ id }:DeleteProductInput ):Promise<Boolean> => {
+    deleteProduct: async (
+      _: any,
+      { id }: DeleteProductInput
+    ): Promise<Boolean> => {
       try {
         let product = await Product.findById(id);
 
-        if(!product)
-          throw new Error(`the product with id ${id} is not exist`);
-        
-        await Product.findOneAndDelete({_id:id});
-        
+        if (!product) throw new Error(`the product with id ${id} is not exist`);
+
+        await Product.findOneAndDelete({ _id: id });
+
         return true;
       } catch (error) {
         throw new Error(`the product with id ${id} is not exist`);
       }
       return false;
-
-    }
-
+    },
+    /* #endregion */
   },
 
   Query: {
     // Users
-    getUsers: async (): Promise<[User]> => {
+    getUsers: async (): Promise<iUser[]> => {
       return await User.find({});
     },
-    getUser: async (_: any,{ input }:TokenInput): Promise<{id:string}> => {      
-      return  await decodeJWT( input ,process.env.JWT_SEED! );
-    },  
+    getUser: async (_: any, { input }: TokenInput): Promise<{ id: string }> => {
+      return await decodeJWT(input, process.env.JWT_SEED!);
+    },
     //  Products
-    getProducts:async () => {
+    getProducts: async () => {
       return await Product.find({});
     },
-    getProduct:async (_:any, {input}:ProductByInput ) => {
-      const {id} =input;
-      const product = await Product.findOne({id});
-      if(!product)
-          throw new Error(`the product with id: ${id} is not exists`)
+    getProduct: async (_: any, { input }: ProductByInput) => {
+      const { id } = input;
+      const product = await Product.findOne({ id });
+      if (!product) throw new Error(`the product with id: ${id} is not exists`);
 
       return product;
-    }
-
+    },
   },
 };
-
-
