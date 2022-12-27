@@ -1,4 +1,5 @@
-import { Product, User } from "../models";
+import { Product, User, Client
+ } from "../models";
 import {
   User as iUser,
   LoginInput,
@@ -11,10 +12,14 @@ import {
   ProductInput,
   UpdateProductInput,
   DeleteProductInput,
+  ClientOutput,
+  ClientInput
 } from "../interfaces";
 
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+import { Types } from 'mongoose';
+
 
 require("dotenv").config({ path: ".env" });
 
@@ -139,6 +144,29 @@ export const resolvers = {
       return false;
     },
     /* #endregion */
+  
+    addClient:async (_:any,{ input }:ClientInput):Promise<ClientOutput | undefined> => {
+      const { email } = input;
+      try {
+      const existUser = await Client.findOne({ email });
+      if (existUser) {
+        throw new Error(`the user with email:${email} exist`);
+      }
+      const client = new Client(input);
+
+      client.seller=new Types.ObjectId("63a99c9ceccd56829e39649f");
+     
+      const res= await client.save();
+
+      return res;
+      
+
+      } catch (error) {
+        
+      }
+      return undefined;
+    }
+  
   },
 
   Query: {

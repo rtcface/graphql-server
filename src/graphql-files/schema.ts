@@ -16,6 +16,17 @@ export const typeDefs = `
     createAt: String
   }
 
+  type Client{
+    id: ID
+    name: String
+    lastName: String
+    email: String
+    phone: String
+    business: String
+    createAt: String
+    seller: ID    
+  }
+
   type UserId {
     id: ID
   }
@@ -50,6 +61,14 @@ export const typeDefs = `
     id:ID!
   }
 
+  input ClientInput{
+    name: String!
+    lastName: String!
+    email: String!
+    phone: String    
+    business: String!
+  }
+
   type Mutation {
     # Users
     addUser(input: UserInput!) : User,
@@ -59,6 +78,9 @@ export const typeDefs = `
     addProduct(input: ProductInput!) : Product,
     updateProduct(id:ID!,input: ProductInput! ) : Product
     deleteProduct(id:ID!): Boolean
+
+    #Clients
+    addClient(input:ClientInput!) : Client
   }
 
   type Query {
