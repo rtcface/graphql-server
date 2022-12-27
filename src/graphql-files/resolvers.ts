@@ -1,3 +1,4 @@
+import { GraphQLError } from 'graphql';
 import { Product, User, Client
  } from "../models";
 import {
@@ -19,6 +20,7 @@ import {
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { Types } from 'mongoose';
+import { MyContext } from '../interfaces/Context.interface';
 
 
 require("dotenv").config({ path: ".env" });
@@ -77,7 +79,9 @@ export const resolvers = {
       const existUser = await User.findOne({ email });
 
       if (!existUser) {
-        throw new Error(`user or password incorrecto ${email}`);
+        throw new GraphQLError(`user or password incorrecto ${email}`, {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });        
       }
 
       if (!(await bcrypt.compare(password, existUser.password))) {
@@ -145,7 +149,7 @@ export const resolvers = {
     },
     /* #endregion */
   
-    addClient:async (_:any,{ input }:ClientInput):Promise<ClientOutput | undefined> => {
+    addClient:async (_:any,{ input }:ClientInput, {id}:MyContext):Promise<ClientOutput | undefined> => {
       const { email } = input;
       try {
       const existUser = await Client.findOne({ email });
@@ -153,8 +157,9 @@ export const resolvers = {
         throw new Error(`the user with email:${email} exist`);
       }
       const client = new Client(input);
-
-      client.seller=new Types.ObjectId("63a99c9ceccd56829e39649f");
+      if(id){
+        client.seller=new Types.ObjectId(id);
+      }
      
       const res= await client.save();
 

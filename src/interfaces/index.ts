@@ -1,3 +1,4 @@
+export { MyContext } from './Context.interface';
 export { Client, ClientOutput, ClientIn } from './Client.Interface';
 export { Product, ProductBy } from './Product.Interface';
 export { User, Login, Token, JwtPayload, UserPass } from './User.Interface';
